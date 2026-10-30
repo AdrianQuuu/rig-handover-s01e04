@@ -1,5 +1,5 @@
 import { mkdir, rm, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { createApp } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
 
@@ -32,5 +32,6 @@ if (/<script\b|javascript\s*:/i.test(html)) {
 }
 
 await rm(outputDir, { recursive: true, force: true });
-await mkdir(outputDir, { recursive: true });
-await writeFile(join(outputDir, 'digest-2026-10-28.html'), html, 'utf8');
+const outputFile = join(outputDir, 'digest', '2026-10-28', 'index.html');
+await mkdir(dirname(outputFile), { recursive: true });
+await writeFile(outputFile, html, 'utf8');

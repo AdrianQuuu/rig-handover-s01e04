@@ -24,7 +24,6 @@ jobs:
       contents: read
     env:
       INCLUDE_LANE_MARKER: ${{ inputs.include_lane_marker && 'true' || 'false' }}
-      LANE_MARKER: ${{ inputs.include_lane_marker && secrets.LANE_MARKER || '' }}
     steps:
       - uses: actions/checkout@v6
 
@@ -44,6 +43,7 @@ jobs:
         run: pnpm exec tsx scripts/render-pages-preview.ts
         env:
           PAGES_OUTPUT_DIR: ${{ runner.temp }}/pages-artifact
+          LANE_MARKER: ${{ inputs.include_lane_marker && secrets.LANE_MARKER || '' }}
 
       - uses: actions/upload-pages-artifact@v4
         with:
