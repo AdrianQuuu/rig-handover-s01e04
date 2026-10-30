@@ -1,0 +1,64 @@
+name: Deploy digest preview to GitHub Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      include_lane_marker:
+        description: Include the lane marker for review; select false for cleanup.
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: digest-preview-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      INCLUDE_LANE_MARKER: ${{ inputs.include_lane_marker && 'true' || 'false' }}
+      LANE_MARKER: ${{ inputs.include_lane_marker && secrets.LANE_MARKER || '' }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --lockfile=false
+
+      - name: Render standalone preview
+        run: pnpm exec tsx scripts/render-pages-preview.ts
+        env:
+          PAGES_OUTPUT_DIR: ${{ runner.temp }}/pages-artifact
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: ${{ runner.temp }}/pages-artifact
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
