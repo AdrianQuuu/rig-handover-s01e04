@@ -23,6 +23,17 @@ export function createApp(config: RigConfig = loadConfig()) {
     ),
   );
 
+  app.get('/api/digest/:night', (c) => {
+    const night = c.req.param('night');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(night)) return c.notFound();
+
+    const file = join(config.runsDir, `${night}.jsonl`);
+    if (!existsSync(file)) return c.notFound();
+
+    const result = readNight(config.runsDir, night);
+    return c.json(sortDigestRows(result.rows));
+  });
+
   app.get('/digest/:night', (c) => {
     const night = c.req.param('night');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(night)) return c.notFound();
